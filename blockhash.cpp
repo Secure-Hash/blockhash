@@ -13,17 +13,17 @@ int Blockhash::process_image(char *fn)
     int *hash;
     Image image;
     image.read(fn);
-   	
-	width = image.size().width();
-	height = image.size().height();
+    image.type(TrueColorType);
+    width = image.size().width();
+    height = image.size().height();
 
-	cout<<height<<endl;
-	cout<<width<<endl;
+    cout<<height<<endl;
+    cout<<width<<endl;
 
-	/* For development purpose take small sample */
-	Quantum *pixel_cache = image.getPixels(0,0,5,5);
-	print_quantum(pixel_cache,5,5);
-	return 0;
+    /* For development purpose take small sample */
+    Quantum *pixel_cache = image.getPixels(0,0,5,5);
+    print_quantum(pixel_cache,5,5);
+    return 0;
 }
 
 int Blockhash::print_quantum(Quantum *pixel_cache,int height,int width){
@@ -34,8 +34,6 @@ int Blockhash::print_quantum(Quantum *pixel_cache,int height,int width){
 			cout<<*pixel_cache<<"  "; //Green
 			pixel_cache++;
 			cout<<*pixel_cache<<"  "; //Blue
-			pixel_cache++;
-			cout<<*pixel_cache<<"  "; //Opacity
 			pixel_cache++;
 			}
 			cout<<endl;
