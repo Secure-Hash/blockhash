@@ -29,6 +29,6 @@ int main(int argc, char **argv)
 			return 0;
 			}
 		}
-	bh.process_image(argv[1],4,1,1);
+	bh.process_image(argv[1],16,1,1);
     return 0;
 }
