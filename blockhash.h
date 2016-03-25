@@ -11,6 +11,7 @@ class Blockhash{
 	private:
 		const int PIXEL_SIZE;
 		const int ROT_DELTA;
+		const char OUT_PATH;
 	public:
 		Blockhash();
 		~Blockhash();
