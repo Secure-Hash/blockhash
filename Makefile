@@ -1,10 +1,13 @@
 all: main
 
-blockhash.o: blockhash.cpp blockhash.h
-	c++ -c blockhash.cpp `Magick++-config --cppflags --cxxflags --ldflags --libs`
+blockhash.o: blockhash.cpp blockhash.h const.h gpg.h
+	c++ $(CFLAGS) -c blockhash.cpp `Magick++-config --cppflags --cxxflags --ldflags --libs`
 
-main: blockhash.o main.cpp
-	c++ -o main blockhash.cpp main.cpp `Magick++-config --cppflags --cxxflags --ldflags --libs`
+gpg.o: gpg.cpp gpg.h const.h
+	c++ $(CFLAGS) -c gpg.cpp -std=gnu++11
+
+main: blockhash.o gpg.o main.cpp
+	c++ $(CFLAGS) -o main blockhash.o gpg.o main.cpp `Magick++-config --cppflags --cxxflags --ldflags --libs`
 
 clean:
 	rm -rf *.o main

@@ -11,7 +11,7 @@ static int cmpfloat(const void *pa, const void *pb)
     return (a < b) ? -1 : (a > b);
 }
 
-Blockhash::Blockhash():PIXEL_SIZE(CPIXEL_SIZE), ROT_DELTA(CROT_DELTA)
+Blockhash::Blockhash():PIXEL_SIZE(CPIXEL_SIZE), ROT_DELTA(CROT_DELTA), OUT_PATH(COUT_PATH)
 {
 }
 
@@ -24,6 +24,7 @@ float Blockhash::median(Quantum *data, int n)
     Quantum *sorted;
     float result;
 
+    log_D("Computing Median");
     sorted = (Quantum *)malloc(n * sizeof(Quantum));
     memcpy(sorted, data, n * sizeof(Quantum));
     qsort(sorted, n, sizeof(Quantum), cmpfloat); //Assuming Quantum as float, make it installation independent
@@ -34,6 +35,7 @@ float Blockhash::median(Quantum *data, int n)
         result = (float) sorted[n / 2];
     }
 
+    log_D("Median is "<<result);
     free(sorted);
     return result;
 }
@@ -55,8 +57,8 @@ int Blockhash::process_image(char *fn, int bits, int quick, int debug)
 		dup.rotate(i*ROT_DELTA); //Rotation with 0,15,30,45,
 		width = dup.size().width();
 		height = dup.size().height();
-		sprintf(name,"exp/ROT_%d.jpg",i*ROT_DELTA);
-		dup.write(name);
+		//sprintf(name,"exp/ROT_%d.jpg",i*ROT_DELTA);
+		//dup.write(name);
 		/* For development purpose take small sample */
 		Quantum *pixel_cache = dup.getPixels(0,0,width,height);
 		hash = (int *)malloc(bits * bits * sizeof(int));

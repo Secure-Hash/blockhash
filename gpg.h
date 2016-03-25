@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 
 #include "const.h"
+#include "log.h"
 using namespace std;
 
 class Gpg{

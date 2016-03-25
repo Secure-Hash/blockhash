@@ -3,6 +3,7 @@
 
 #include <Magick++.h>
 #include "const.h"
+#include "log.h"
 
 using namespace std;
 using namespace Magick;
@@ -11,7 +12,7 @@ class Blockhash{
 	private:
 		const int PIXEL_SIZE;
 		const int ROT_DELTA;
-		const char OUT_PATH;
+		const char *OUT_PATH;
 	public:
 		Blockhash();
 		~Blockhash();
