@@ -1,2 +1,2 @@
-simple gui.
-Small amount work is left
+simple gui done.
+
