@@ -7,7 +7,7 @@ using namespace std;
 using namespace Magick;
 
 void help() {
-    cout<<"Usage: blockhash [-h|--help] filenames...\n"
+    cout<<"Usage: blockhash [-h|--help] imagename output\n"
            "\n"
            "Optional arguments:\n"
            "-h, --help            Show this help message and exit\n";
@@ -16,19 +16,22 @@ void help() {
 int main(int argc, char **argv)
 {
 	InitializeMagick(*argv);
-	Blockhash bh;	
+	Blockhash bh;
 
     if (argc < 2) {
 		help();
         return 0;
     }
-    
-    if(argc==2){
+
+    if(argc==3){
 		if(!strcmp(argv[1],"--help") || !strcmp(argv[1],"-h")){
 			help();
 			return 0;
 			}
 		}
 	bh.process_image(argv[1],16,1,1);
+	if(Gpg::generate("./.data/hash.txt",std::string(argv[2]) + ".asc")){
+		cout<<"Successfully generated signature"<<endl;
+		}
     return 0;
 }

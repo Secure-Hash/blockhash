@@ -4,6 +4,7 @@
 #include <Magick++.h>
 #include "const.h"
 #include "log.h"
+#include "gpg.h"
 
 using namespace std;
 using namespace Magick;
@@ -13,6 +14,7 @@ class Blockhash{
 		const int PIXEL_SIZE;
 		const int ROT_DELTA;
 		const char *OUT_PATH;
+		const char *HASH_FILE;
 	public:
 		Blockhash();
 		~Blockhash();

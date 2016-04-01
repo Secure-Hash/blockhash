@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
+#include <fstream>
 #include "blockhash.h"
 
 static int cmpfloat(const void *pa, const void *pb)
@@ -11,7 +12,7 @@ static int cmpfloat(const void *pa, const void *pb)
     return (a < b) ? -1 : (a > b);
 }
 
-Blockhash::Blockhash():PIXEL_SIZE(CPIXEL_SIZE), ROT_DELTA(CROT_DELTA), OUT_PATH(COUT_PATH)
+Blockhash::Blockhash():PIXEL_SIZE(CPIXEL_SIZE), ROT_DELTA(CROT_DELTA), OUT_PATH(COUT_PATH), HASH_FILE(CHASH_FILE)
 {
 }
 
@@ -34,7 +35,6 @@ float Blockhash::median(Quantum *data, int n)
     } else {
         result = (float) sorted[n / 2];
     }
-
     log_D("Median is "<<result);
     free(sorted);
     return result;
@@ -51,6 +51,18 @@ int Blockhash::process_image(char *fn, int bits, int quick, int debug)
     image.read(fn);
     image.modifyImage();
     image.type(TrueColorType);
+
+    if(!Gpg::exists(HASH_FILE)){
+		ofstream outf(HASH_FILE);
+	}
+	else{
+		fstream f;
+		f.open(HASH_FILE, fstream::out | fstream::trunc);
+		f.close();
+	}
+
+
+
     for(i=0;i<=5;i++){
 		dup = image;
 		dup.modifyImage();
@@ -63,6 +75,7 @@ int Blockhash::process_image(char *fn, int bits, int quick, int debug)
 		Quantum *pixel_cache = dup.getPixels(0,0,width,height);
 		hash = (int *)malloc(bits * bits * sizeof(int));
 		blockhash_int(bits, pixel_cache, width, height, hash);
+		bits_to_hexhash(hash,bits*bits);
 		free(hash);
 	}
     //print_quantum(pixel_cache,width,height);
@@ -110,6 +123,9 @@ char* Blockhash::bits_to_hexhash(int *bits, int nbits)
     char  *hex;
     char  *stmp;
 
+	ofstream myfile;
+	myfile.open (HASH_FILE, ios::out | ios::app);
+
     len = nbits / 4;
 
     hex = (char *)malloc(len + 1);
@@ -125,8 +141,10 @@ char* Blockhash::bits_to_hexhash(int *bits, int nbits)
 
         sprintf(stmp, "%1x", tmp);
         hex[i] = stmp[0];
-        cout<<hex[i];
+        myfile<<hex[i];
     }
+	myfile<<endl;
+	myfile.close();
 
     free(stmp);
     return hex;
@@ -142,13 +160,6 @@ void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, in
 
     block_width = width / bits;
     block_height = height / bits;
-    //cout<<"[DEBUG] Height: "<<height<<", Width: "<<width<<endl;
-	//cout<<"[DEBUG] Block Height: "<<block_height<<", Block Width: "<<block_width<<endl;
-
-	cout.setf(ios::fixed, ios::floatfield);
-	cout.setf(ios::showpoint);
-	cout.precision(1);
-
     blocks = (Quantum *)calloc(bits * bits, sizeof(Quantum));
     for (y = 0; y < bits; y++) {
         for (x = 0; x < bits; x++) {
@@ -157,13 +168,11 @@ void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, in
             for (iy = 0; iy < block_height; iy++) {
                 for (ix = 0; ix < block_width; ix++) {
                     ii = ((y * block_height + iy) * width + (x * block_width + ix)) * PIXEL_SIZE;
-					value += data[ii] + data[ii+1] + data[ii+2]; 
+					value += data[ii] + data[ii+1] + data[ii+2];
                 }
             }
             blocks[y * bits + x] = value;
         }
     }
     translate_blocks_to_bits(blocks,bits*bits,block_height*block_width,hash);
-    bits_to_hexhash(hash,bits*bits);
-    cout<<endl;
 }

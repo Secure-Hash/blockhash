@@ -5,6 +5,7 @@
 #define CROT_DELTA 		15
 #define CDEPTH          65536
 #define COUT_PATH       ".data/"
+#define CHASH_FILE		".data/hash.txt"
 
 #ifndef DEBUG
 #define DEV_NULL       " > /dev/null 2>&1"
