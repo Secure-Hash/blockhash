@@ -1,18 +1,22 @@
 #include "gpg.h"
 
-/** gpg --sign --armor --batch --yes --output outname.asc input */
-string Gpg::gen_cmd		= "gpg --sign --armor --batch --yes --output ";
+
+Gpg::Gpg()
+{
+	/** gpg --sign --armor --batch --yes --output outname.asc input */
+	gen_cmd	= "gpg --sign --armor --batch --yes --output ";
 
 /**gpg --decrypt --batch --yes --output outname signed.asc*/
-string Gpg::verify_cmd 	= "gpg --decrypt --batch --yes --output "; 
+	verify_cmd 	= "gpg --decrypt --batch --yes --output ";
 
-bool Gpg::error 		= false;
-string Gpg::err_msg		= "";
+	error = false;
+	err_msg	= "";
+}
 
 bool Gpg::set_err(bool error,string err_msg="")
 {
-		Gpg::error = error;
-		Gpg::err_msg = err_msg;
+		error = error;
+		err_msg = err_msg;
 		if(error)
 			log_E(err_msg);
 }
@@ -67,5 +71,5 @@ inline bool Gpg::exists(const string& name) {
         return true;
     } else {
         return false;
-    } 
+    }
 }

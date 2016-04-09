@@ -13,16 +13,18 @@ using namespace std;
 
 class Gpg{
 	private:
-		static string gen_cmd;
-		static string verify_cmd;
-		static bool error;
-		static string err_msg;
-		static bool set_err(bool error,string err_msg);
-		static int exec_cmd(string& cmd,string& pattern);
+		string gen_cmd;
+		string verify_cmd;
+		bool error;
+		string err_msg;
+		bool set_err(bool error,string err_msg);
+		int exec_cmd(string& cmd,string& pattern);
+		bool exists(const string& name);
+
 	public:
-		static bool verify(const string& fin,const string& fout);
-		static bool generate(const string& fin,const string& fout);
-		static bool exists(const string& name);
+		Gpg();
+		bool verify(const string& fin,const string& fout);
+		bool generate(const string& fin,const string& fout);
 	};
 #endif
 

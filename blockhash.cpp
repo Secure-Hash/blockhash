@@ -1,8 +1,4 @@
-#include <iostream>
-#include <cstring>
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
+
 #include "blockhash.h"
 
 static int cmpfloat(const void *pa, const void *pb)
@@ -40,7 +36,7 @@ float Blockhash::median(Quantum *data, int n)
     return result;
 }
 
-int Blockhash::process_image(char *fn, int bits, int quick, int debug)
+int Blockhash::process_image(string const &fn, int bits, int quick, int debug)
 {
     int i, j;
     size_t width, height;
@@ -48,20 +44,13 @@ int Blockhash::process_image(char *fn, int bits, int quick, int debug)
     char name[10];
     Image image;
     Image dup;
-    image.read(fn);
+    image.read(fn.c_str());
     image.modifyImage();
     image.type(TrueColorType);
 
-    if(!Gpg::exists(HASH_FILE)){
-		ofstream outf(HASH_FILE);
-	}
-	else{
-		fstream f;
-		f.open(HASH_FILE, fstream::out | fstream::trunc);
-		f.close();
-	}
-
-
+	fstream f;
+	f.open(HASH_FILE, fstream::out | fstream::trunc);
+	f.close();
 
     for(i=0;i<=5;i++){
 		dup = image;
@@ -175,4 +164,48 @@ void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, in
         }
     }
     translate_blocks_to_bits(blocks,bits*bits,block_height*block_width,hash);
+}
+
+float Blockhash::compare_hash(string const &hash_file1,string const &hash_file2)
+{
+	string line,hash1;
+	float curr_per=0.0f,perc=0.0f;
+	int count;
+	ifstream hashfile(hash_file1.c_str());
+	ifstream hash(hash_file2.c_str());
+
+	/* Read Hash file */
+	if(!hashfile.is_open()){
+		log_E("Unable to open file\n");
+		return -1;
+		}
+	getline(hashfile,line) ;
+	hash1=line;
+	hashfile.close();
+
+	if(!hash.is_open()){
+		//TODO Set Error for GUI
+		log_E("Unable to open file\n");
+		return -1;
+		}
+
+	while(getline(hash,line)){
+		count=0;
+		if(line.compare(hash1)==0){
+			perc=100;
+			break;
+		}
+		else{
+			for(int i=0;i<hash1.length();i++){
+				if(hash1[i]==line[i])
+					count++;
+			}
+			curr_per=((float)count/hash1.length()) *100;
+			if(curr_per>perc){
+				perc=curr_per;
+			}
+		}
+	}
+	hash.close();
+	return perc;
 }
