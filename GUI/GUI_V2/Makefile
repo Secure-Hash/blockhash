@@ -12,13 +12,13 @@ MAKEFILE      = Makefile
 
 CC            = gcc
 CXX           = g++
-DEFINES       = -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
-CFLAGS        = -m64 -pipe -O2 -Wall -W -D_REENTRANT -fPIE $(DEFINES)
-CXXFLAGS      = -m64 -pipe -O2 -Wall -W -D_REENTRANT -fPIE $(DEFINES)
-INCPATH       = -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I. -I. -I/usr/include/qt5 -I/usr/include/qt5/QtWidgets -I/usr/include/qt5/QtGui -I/usr/include/qt5/QtCore -I. -I.
+DEFINES       = -DMAGICKCORE_HDRI_ENABLE=1 -DMAGICKCORE_QUANTUM_DEPTH=16 -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
+CFLAGS        = -m64 -pipe -O2 -fopenmp -Wall -W -D_REENTRANT -fPIE $(DEFINES)
+CXXFLAGS      = -m64 -pipe -O2 -fopenmp -std=c++0x -Wall -W -D_REENTRANT -fPIE $(DEFINES)
+INCPATH       = -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I. -I. -Iinclude -I/usr/local/include/ImageMagick-7 -I/usr/include/qt5 -I/usr/include/qt5/QtWidgets -I/usr/include/qt5/QtGui -I/usr/include/qt5/QtCore -I. -I.
 LINK          = g++
 LFLAGS        = -m64 -Wl,-O1
-LIBS          = $(SUBLIBS) -L/usr/X11R6/lib64 -lQt5Widgets -L/usr/lib/x86_64-linux-gnu -lQt5Gui -lQt5Core -lGL -lpthread 
+LIBS          = $(SUBLIBS) -L/usr/X11R6/lib64 -L/usr/local/lib -lMagick++-7.Q16HDRI -lMagickWand-7.Q16HDRI -lMagickCore-7.Q16HDRI -lQt5Widgets -L/usr/lib/x86_64-linux-gnu -lQt5Gui -lQt5Core -lGL -lpthread 
 AR            = ar cqs
 RANLIB        = 
 QMAKE         = /usr/lib/x86_64-linux-gnu/qt5/bin/qmake
@@ -46,9 +46,13 @@ OBJECTS_DIR   = ./
 ####### Files
 
 SOURCES       = main.cpp \
-		mainwindow.cpp moc_mainwindow.cpp
+		mainwindow.cpp \
+		src/blockhash.cpp \
+		src/gpg.cpp moc_mainwindow.cpp
 OBJECTS       = main.o \
 		mainwindow.o \
+		blockhash.o \
+		gpg.o \
 		moc_mainwindow.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/shell-unix.conf \
@@ -96,6 +100,8 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resolve_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_post.prf \
+		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/link_pkgconfig.prf \
+		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/c++11.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/unix/gdb_dwarf_index.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/warn_on.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt.prf \
@@ -188,6 +194,8 @@ Makefile: SmartImageComparison.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resolve_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_post.prf \
+		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/link_pkgconfig.prf \
+		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/c++11.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/unix/gdb_dwarf_index.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/warn_on.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt.prf \
@@ -251,6 +259,8 @@ Makefile: SmartImageComparison.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_pre.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resolve_config.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_post.prf:
+/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/link_pkgconfig.prf:
+/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/c++11.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/unix/gdb_dwarf_index.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/warn_on.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt.prf:
@@ -274,7 +284,7 @@ qmake_all: FORCE
 
 dist: 
 	@test -d .tmp/SmartImageComparison1.0.0 || mkdir -p .tmp/SmartImageComparison1.0.0
-	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/SmartImageComparison1.0.0/ && $(COPY_FILE) --parents mainwindow.h .tmp/SmartImageComparison1.0.0/ && $(COPY_FILE) --parents main.cpp mainwindow.cpp .tmp/SmartImageComparison1.0.0/ && $(COPY_FILE) --parents mainwindow.ui .tmp/SmartImageComparison1.0.0/ && (cd `dirname .tmp/SmartImageComparison1.0.0` && $(TAR) SmartImageComparison1.0.0.tar SmartImageComparison1.0.0 && $(COMPRESS) SmartImageComparison1.0.0.tar) && $(MOVE) `dirname .tmp/SmartImageComparison1.0.0`/SmartImageComparison1.0.0.tar.gz . && $(DEL_FILE) -r .tmp/SmartImageComparison1.0.0
+	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/SmartImageComparison1.0.0/ && $(COPY_FILE) --parents mainwindow.h gpg.h include/blockhash.h include/const.h include/gpg.h include/log.h .tmp/SmartImageComparison1.0.0/ && $(COPY_FILE) --parents main.cpp mainwindow.cpp src/blockhash.cpp src/gpg.cpp .tmp/SmartImageComparison1.0.0/ && $(COPY_FILE) --parents mainwindow.ui .tmp/SmartImageComparison1.0.0/ && (cd `dirname .tmp/SmartImageComparison1.0.0` && $(TAR) SmartImageComparison1.0.0.tar SmartImageComparison1.0.0 && $(COMPRESS) SmartImageComparison1.0.0.tar) && $(MOVE) `dirname .tmp/SmartImageComparison1.0.0`/SmartImageComparison1.0.0.tar.gz . && $(DEL_FILE) -r .tmp/SmartImageComparison1.0.0
 
 
 clean:compiler_clean 
@@ -553,7 +563,6 @@ main.o: main.cpp mainwindow.h \
 		/usr/include/qt5/QtGui/qinputmethod.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
 
-
 mainwindow.o: mainwindow.cpp mainwindow.h \
 		/usr/include/qt5/QtWidgets/QMainWindow \
 		/usr/include/qt5/QtWidgets/qmainwindow.h \
@@ -717,8 +726,6 @@ mainwindow.o: mainwindow.cpp mainwindow.h \
 		/usr/include/qt5/QtWidgets/QToolBar \
 		/usr/include/qt5/QtWidgets/qtoolbar.h \
 		/usr/include/qt5/QtWidgets/QWidget \
-		/usr/include/qt5/QtWidgets/QDialog \
-		/usr/include/qt5/QtWidgets/qdialog.h \
 		/usr/include/qt5/QtWidgets/QSlider \
 		/usr/include/qt5/QtWidgets/QSpinBox \
 		/usr/include/qt5/QtWidgets/qspinbox.h \
@@ -729,14 +736,158 @@ mainwindow.o: mainwindow.cpp mainwindow.h \
 		/usr/include/qt5/QtWidgets/qgridlayout.h \
 		/usr/include/qt5/QtWidgets/QMessageBox \
 		/usr/include/qt5/QtWidgets/qmessagebox.h \
+		/usr/include/qt5/QtWidgets/qdialog.h \
 		/usr/include/qt5/QtWidgets/QFileDialog \
 		/usr/include/qt5/QtWidgets/qfiledialog.h \
 		/usr/include/qt5/QtCore/qdir.h \
 		/usr/include/qt5/QtCore/qfileinfo.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o mainwindow.cpp
 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o mainwindow.cpp 
+blockhash.o: src/blockhash.cpp include/blockhash.h \
+		/usr/local/include/ImageMagick-7/Magick++.h \
+		/usr/local/include/ImageMagick-7/Magick++/Include.h \
+		/usr/local/include/ImageMagick-7/MagickCore/magick-config.h \
+		/usr/local/include/ImageMagick-7/MagickCore/magick-baseconfig.h \
+		/usr/local/include/ImageMagick-7/MagickCore/MagickCore.h \
+		/usr/local/include/ImageMagick-7/MagickCore/method-attribute.h \
+		/usr/local/include/ImageMagick-7/MagickCore/methods.h \
+		/usr/local/include/ImageMagick-7/MagickCore/magick-type.h \
+		/usr/local/include/ImageMagick-7/MagickCore/accelerate.h \
+		/usr/local/include/ImageMagick-7/MagickCore/fx.h \
+		/usr/local/include/ImageMagick-7/MagickCore/draw.h \
+		/usr/local/include/ImageMagick-7/MagickCore/geometry.h \
+		/usr/local/include/ImageMagick-7/MagickCore/image.h \
+		/usr/local/include/ImageMagick-7/MagickCore/color.h \
+		/usr/local/include/ImageMagick-7/MagickCore/pixel.h \
+		/usr/local/include/ImageMagick-7/MagickCore/colorspace.h \
+		/usr/local/include/ImageMagick-7/MagickCore/exception.h \
+		/usr/local/include/ImageMagick-7/MagickCore/semaphore.h \
+		/usr/local/include/ImageMagick-7/MagickCore/blob.h \
+		/usr/local/include/ImageMagick-7/MagickCore/stream.h \
+		/usr/local/include/ImageMagick-7/MagickCore/cache-view.h \
+		/usr/local/include/ImageMagick-7/MagickCore/composite.h \
+		/usr/local/include/ImageMagick-7/MagickCore/compress.h \
+		/usr/local/include/ImageMagick-7/MagickCore/effect.h \
+		/usr/local/include/ImageMagick-7/MagickCore/morphology.h \
+		/usr/local/include/ImageMagick-7/MagickCore/layer.h \
+		/usr/local/include/ImageMagick-7/MagickCore/locale_.h \
+		/usr/local/include/ImageMagick-7/MagickCore/linked-list.h \
+		/usr/local/include/ImageMagick-7/MagickCore/monitor.h \
+		/usr/local/include/ImageMagick-7/MagickCore/profile.h \
+		/usr/local/include/ImageMagick-7/MagickCore/string_.h \
+		/usr/local/include/ImageMagick-7/MagickCore/quantum.h \
+		/usr/local/include/ImageMagick-7/MagickCore/resample.h \
+		/usr/local/include/ImageMagick-7/MagickCore/resize.h \
+		/usr/local/include/ImageMagick-7/MagickCore/timer.h \
+		/usr/local/include/ImageMagick-7/MagickCore/type.h \
+		/usr/local/include/ImageMagick-7/MagickCore/statistic.h \
+		/usr/local/include/ImageMagick-7/MagickCore/animate.h \
+		/usr/local/include/ImageMagick-7/MagickCore/annotate.h \
+		/usr/local/include/ImageMagick-7/MagickCore/artifact.h \
+		/usr/local/include/ImageMagick-7/MagickCore/attribute.h \
+		/usr/local/include/ImageMagick-7/MagickCore/cache.h \
+		/usr/local/include/ImageMagick-7/MagickCore/channel.h \
+		/usr/local/include/ImageMagick-7/MagickCore/cipher.h \
+		/usr/local/include/ImageMagick-7/MagickCore/client.h \
+		/usr/local/include/ImageMagick-7/MagickCore/coder.h \
+		/usr/local/include/ImageMagick-7/MagickCore/colormap.h \
+		/usr/local/include/ImageMagick-7/MagickCore/compare.h \
+		/usr/local/include/ImageMagick-7/MagickCore/configure.h \
+		/usr/local/include/ImageMagick-7/MagickCore/constitute.h \
+		/usr/local/include/ImageMagick-7/MagickCore/decorate.h \
+		/usr/local/include/ImageMagick-7/MagickCore/delegate.h \
+		/usr/local/include/ImageMagick-7/MagickCore/deprecate.h \
+		/usr/local/include/ImageMagick-7/MagickCore/display.h \
+		/usr/local/include/ImageMagick-7/MagickCore/distort.h \
+		/usr/local/include/ImageMagick-7/MagickCore/distribute-cache.h \
+		/usr/local/include/ImageMagick-7/MagickCore/enhance.h \
+		/usr/local/include/ImageMagick-7/MagickCore/feature.h \
+		/usr/local/include/ImageMagick-7/MagickCore/fourier.h \
+		/usr/local/include/ImageMagick-7/MagickCore/gem.h \
+		/usr/local/include/ImageMagick-7/MagickCore/random_.h \
+		/usr/local/include/ImageMagick-7/MagickCore/histogram.h \
+		/usr/local/include/ImageMagick-7/MagickCore/identify.h \
+		/usr/local/include/ImageMagick-7/MagickCore/image-view.h \
+		/usr/local/include/ImageMagick-7/MagickCore/list.h \
+		/usr/local/include/ImageMagick-7/MagickCore/log.h \
+		/usr/local/include/ImageMagick-7/MagickCore/magic.h \
+		/usr/local/include/ImageMagick-7/MagickCore/magick.h \
+		/usr/local/include/ImageMagick-7/MagickCore/matrix.h \
+		/usr/local/include/ImageMagick-7/MagickCore/memory_.h \
+		/usr/local/include/ImageMagick-7/MagickCore/module.h \
+		/usr/local/include/ImageMagick-7/MagickCore/version.h \
+		/usr/local/include/ImageMagick-7/MagickCore/mime.h \
+		/usr/local/include/ImageMagick-7/MagickCore/montage.h \
+		/usr/local/include/ImageMagick-7/MagickCore/opencl.h \
+		/usr/local/include/ImageMagick-7/MagickCore/option.h \
+		/usr/local/include/ImageMagick-7/MagickCore/paint.h \
+		/usr/local/include/ImageMagick-7/MagickCore/pixel-accessor.h \
+		/usr/local/include/ImageMagick-7/MagickCore/policy.h \
+		/usr/local/include/ImageMagick-7/MagickCore/prepress.h \
+		/usr/local/include/ImageMagick-7/MagickCore/property.h \
+		/usr/local/include/ImageMagick-7/MagickCore/quantize.h \
+		/usr/local/include/ImageMagick-7/MagickCore/registry.h \
+		/usr/local/include/ImageMagick-7/MagickCore/resource_.h \
+		/usr/local/include/ImageMagick-7/MagickCore/segment.h \
+		/usr/local/include/ImageMagick-7/MagickCore/shear.h \
+		/usr/local/include/ImageMagick-7/MagickCore/signature.h \
+		/usr/local/include/ImageMagick-7/MagickCore/splay-tree.h \
+		/usr/local/include/ImageMagick-7/MagickCore/token.h \
+		/usr/local/include/ImageMagick-7/MagickCore/transform.h \
+		/usr/local/include/ImageMagick-7/MagickCore/threshold.h \
+		/usr/local/include/ImageMagick-7/MagickCore/utility.h \
+		/usr/local/include/ImageMagick-7/MagickCore/vision.h \
+		/usr/local/include/ImageMagick-7/MagickCore/xml-tree.h \
+		/usr/local/include/ImageMagick-7/MagickCore/xwindow.h \
+		/usr/local/include/ImageMagick-7/MagickWand/MagickWand.h \
+		/usr/local/include/ImageMagick-7/MagickWand/method-attribute.h \
+		/usr/local/include/ImageMagick-7/MagickWand/animate.h \
+		/usr/local/include/ImageMagick-7/MagickWand/compare.h \
+		/usr/local/include/ImageMagick-7/MagickWand/composite.h \
+		/usr/local/include/ImageMagick-7/MagickWand/conjure.h \
+		/usr/local/include/ImageMagick-7/MagickWand/convert.h \
+		/usr/local/include/ImageMagick-7/MagickWand/deprecate.h \
+		/usr/local/include/ImageMagick-7/MagickWand/display.h \
+		/usr/local/include/ImageMagick-7/MagickWand/drawing-wand.h \
+		/usr/local/include/ImageMagick-7/MagickWand/pixel-wand.h \
+		/usr/local/include/ImageMagick-7/MagickWand/identify.h \
+		/usr/local/include/ImageMagick-7/MagickWand/import.h \
+		/usr/local/include/ImageMagick-7/MagickWand/wandcli.h \
+		/usr/local/include/ImageMagick-7/MagickWand/operation.h \
+		/usr/local/include/ImageMagick-7/MagickWand/magick-cli.h \
+		/usr/local/include/ImageMagick-7/MagickWand/magick-property.h \
+		/usr/local/include/ImageMagick-7/MagickWand/magick-image.h \
+		/usr/local/include/ImageMagick-7/MagickWand/mogrify.h \
+		/usr/local/include/ImageMagick-7/MagickWand/montage.h \
+		/usr/local/include/ImageMagick-7/MagickWand/pixel-iterator.h \
+		/usr/local/include/ImageMagick-7/MagickWand/stream.h \
+		/usr/local/include/ImageMagick-7/MagickWand/wand-view.h \
+		/usr/local/include/ImageMagick-7/Magick++/Functions.h \
+		/usr/local/include/ImageMagick-7/Magick++/Image.h \
+		/usr/local/include/ImageMagick-7/Magick++/Blob.h \
+		/usr/local/include/ImageMagick-7/Magick++/Color.h \
+		/usr/local/include/ImageMagick-7/Magick++/Drawable.h \
+		/usr/local/include/ImageMagick-7/Magick++/Geometry.h \
+		/usr/local/include/ImageMagick-7/Magick++/Exception.h \
+		/usr/local/include/ImageMagick-7/Magick++/Statistic.h \
+		/usr/local/include/ImageMagick-7/Magick++/TypeMetric.h \
+		/usr/local/include/ImageMagick-7/Magick++/Pixels.h \
+		/usr/local/include/ImageMagick-7/Magick++/ResourceLimits.h \
+		/usr/local/include/ImageMagick-7/Magick++/STL.h \
+		/usr/local/include/ImageMagick-7/Magick++/CoderInfo.h \
+		/usr/local/include/ImageMagick-7/Magick++/Montage.h \
+		include/const.h \
+		include/log.h \
+		include/gpg.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o blockhash.o src/blockhash.cpp
 
+gpg.o: src/gpg.cpp include/gpg.h \
+		include/const.h \
+		include/log.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o gpg.o src/gpg.cpp
 
+moc_mainwindow.o: moc_mainwindow.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_mainwindow.o moc_mainwindow.cpp
 
 ####### Install
 

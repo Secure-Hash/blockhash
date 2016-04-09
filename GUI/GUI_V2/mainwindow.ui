@@ -361,26 +361,6 @@ background-color: rgb(255, 255, 255);</string>
       <string>Reset</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_8">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>150</y>
-       <width>180</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Hash Size</string>
-     </property>
-    </widget>
     <widget class="QPushButton" name="btn_comparehash">
      <property name="geometry">
       <rect>
@@ -393,56 +373,6 @@ background-color: rgb(255, 255, 255);</string>
      <property name="text">
       <string>Compare Hash</string>
      </property>
-    </widget>
-    <widget class="QComboBox" name="hashsize_2">
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>150</y>
-       <width>151</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <item>
-      <property name="text">
-       <string>Choose Hash Size</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>4</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>8</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>16</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>32</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>64</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>128</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>256</string>
-      </property>
-     </item>
     </widget>
     <widget class="QLineEdit" name="hash1">
      <property name="geometry">

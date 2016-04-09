@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <blockhash.h>
+#include <gpg.h>
 
 namespace Ui {
 class MainWindow;
@@ -35,6 +37,8 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    Blockhash bh;
+    Gpg gpg;
 };
 
 #endif // MAINWINDOW_H
