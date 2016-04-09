@@ -58,8 +58,8 @@ int Blockhash::process_image(string const &fn, int bits, int quick, int debug)
 		dup.rotate(i*ROT_DELTA); //Rotation with 0,15,30,45,
 		width = dup.size().width();
 		height = dup.size().height();
-		//sprintf(name,"exp/ROT_%d.jpg",i*ROT_DELTA);
-		//dup.write(name);
+		sprintf(name,"exp/ROT_%d.jpg",i*ROT_DELTA);
+		dup.write(name);
 		/* For development purpose take small sample */
 		Quantum *pixel_cache = dup.getPixels(0,0,width,height);
 		hash = (int *)malloc(bits * bits * sizeof(int));
@@ -168,7 +168,7 @@ void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, in
 
 float Blockhash::compare_hash(string const &hash_file1,string const &hash_file2)
 {
-	string line,hash1;
+	string line,line1;
 	float curr_per=0.0f,perc=0.0f;
 	int count;
 	ifstream hashfile(hash_file1.c_str());
@@ -179,9 +179,6 @@ float Blockhash::compare_hash(string const &hash_file1,string const &hash_file2)
 		log_E("Unable to open file\n");
 		return -1;
 		}
-	getline(hashfile,line) ;
-	hash1=line;
-	hashfile.close();
 
 	if(!hash.is_open()){
 		//TODO Set Error for GUI
@@ -189,23 +186,30 @@ float Blockhash::compare_hash(string const &hash_file1,string const &hash_file2)
 		return -1;
 		}
 
-	while(getline(hash,line)){
-		count=0;
-		if(line.compare(hash1)==0){
-			perc=100;
-			break;
-		}
-		else{
-			for(int i=0;i<hash1.length();i++){
-				if(hash1[i]==line[i])
+	while(getline(hashfile,line)){
+		while(getline(hash,line1)){
+			count=0;
+			if(line.compare(line1)==0){
+				perc=100;
+			}
+			else{
+				for(int i=0;i<line1.length();i++){
+					if(line[i]==line1[i])
 					count++;
+				}
+				curr_per=((float)count/line1.length()) *100;
+				if(curr_per > perc)
+					perc=curr_per;
 			}
-			curr_per=((float)count/hash1.length()) *100;
-			if(curr_per>perc){
-				perc=curr_per;
-			}
+			if(perc==100)
+				break;
 		}
+		if(perc==100)
+			break;
+		hash.clear();
+		hash.seekg(0, ios::beg);
 	}
+	hashfile.close();
 	hash.close();
 	return perc;
 }
