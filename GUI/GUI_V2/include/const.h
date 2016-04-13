@@ -6,7 +6,7 @@
 #define CDEPTH          65536
 #define COUT_PATH       ".data/"
 #define CHASH_FILE		".data/hash.txt"
-
+#define CDATA_DIR        ".data/"
 #ifndef DEBUG
 #define DEV_NULL       " > /dev/null 2>&1"
 #else

@@ -1,6 +1,9 @@
 
 #include <blockhash.h>
 
+/*
+ * Float compariosn for sorting
+ */
 static int cmpfloat(const void *pa, const void *pb)
 {
     float a = *(const float *) pa;
@@ -8,14 +11,44 @@ static int cmpfloat(const void *pa, const void *pb)
     return (a < b) ? -1 : (a > b);
 }
 
+/*
+ * Public constructor
+ */
 Blockhash::Blockhash():PIXEL_SIZE(CPIXEL_SIZE), ROT_DELTA(CROT_DELTA), OUT_PATH(COUT_PATH), HASH_FILE(CHASH_FILE)
 {
+    error = false;
+    err_msg	= "";
 }
 
+/*
+ * Public Destructor
+ */
 Blockhash::~Blockhash()
 {
+
+}
+/*
+ * Set error string
+ */
+bool Blockhash::set_err(bool error,string err_msg="")
+{
+    this->error = error;
+    this->err_msg = err_msg;
+    if(error)
+        log_E(err_msg);
+    return true;
+}
+/*
+ * Get any error
+ */
+string Blockhash::get_err()
+{
+    return err_msg;
 }
 
+/*
+ * Compute meadian of data
+ */
 float Blockhash::median(Quantum *data, int n)
 {
     Quantum *sorted;
@@ -24,7 +57,7 @@ float Blockhash::median(Quantum *data, int n)
     log_D("Computing Median");
     sorted = (Quantum *)malloc(n * sizeof(Quantum));
     memcpy(sorted, data, n * sizeof(Quantum));
-    qsort(sorted, n, sizeof(Quantum), cmpfloat); //Assuming Quantum as float, make it installation independent
+    qsort(sorted, n, sizeof(Quantum), cmpfloat);
 
     if (n % 2 == 0) {
         result = (float) (sorted[n / 2] + sorted[n / 2 + 1]) / 2;
@@ -36,7 +69,10 @@ float Blockhash::median(Quantum *data, int n)
     return result;
 }
 
-int Blockhash::process_image(string const &fn, int bits, int quick, int debug)
+/*
+ * Process image and compute its hash
+ */
+int Blockhash::process_image(string const &fn, int bits)
 {
     int i;
     size_t width, height;
@@ -46,31 +82,31 @@ int Blockhash::process_image(string const &fn, int bits, int quick, int debug)
     image.read(fn.c_str());
     image.modifyImage();
     image.type(TrueColorType);
-    (void) quick;
-    (void) debug;
 	fstream f;
 	f.open(HASH_FILE, fstream::out | fstream::trunc);
 	f.close();
-
+    set_err(false);
     for(i=0;i<=5;i++){
 		dup = image;
 		dup.modifyImage();
 		dup.rotate(i*ROT_DELTA); //Rotation with 0,15,30,45,
 		width = dup.size().width();
 		height = dup.size().height();
-		//sprintf(name,"exp/ROT_%d.jpg",i*ROT_DELTA);
-		//dup.write(name);
-		/* For development purpose take small sample */
 		Quantum *pixel_cache = dup.getPixels(0,0,width,height);
 		hash = (int *)malloc(bits * bits * sizeof(int));
 		blockhash_int(bits, pixel_cache, width, height, hash);
-		bits_to_hexhash(hash,bits*bits);
+        if(bits_to_hexhash(hash,bits*bits)!=0){
+            free(hash);
+            return 1;
+        }
 		free(hash);
 	}
-    //print_quantum(pixel_cache,width,height);
     return 0;
 }
 
+/*
+ * Print pixel information
+ */
 int Blockhash::print_quantum(Quantum *pixel_cache,int width,int height){
 	for(int i = 0; i < height; i++){
 		for(int j = 0; j < width; j++){
@@ -85,12 +121,14 @@ int Blockhash::print_quantum(Quantum *pixel_cache,int width,int height){
 		}
 	return 0;
 	}
-
+/*
+ * Convert each block to 1 or 0 depending upon meadin of band
+ */
 void Blockhash::translate_blocks_to_bits(Quantum *blocks, int nblocks, int pixels_per_block, int *hash)
 {
     Quantum half_block_value;
-    int bandsize, i, j, v;
-    float m;
+    Quantum v,m;
+    int bandsize, i, j;
 
     half_block_value = pixels_per_block * CDEPTH * PIXEL_SIZE / 2; // For current configuration its 65536
     bandsize = nblocks / N_BANDS;
@@ -104,17 +142,24 @@ void Blockhash::translate_blocks_to_bits(Quantum *blocks, int nblocks, int pixel
     }
 }
 
-char* Blockhash::bits_to_hexhash(int *bits, int nbits)
+/*
+ * Convert bits to hexadecimal
+ */
+int Blockhash::bits_to_hexhash(int *bits, int nbits)
 {
     int    i, j, b;
     int    len;
     int    tmp;
     char  *hex;
     char  *stmp;
-
+    set_err(false);
+    mkdir(CDATA_DIR, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	ofstream myfile;
-	myfile.open (HASH_FILE, ios::out | ios::app);
-
+    myfile.open (HASH_FILE, ios::out | ios::app);
+    if(!myfile.is_open()){
+        set_err(true,"Unable to open file for writing hash");
+        return 1;
+    }
     len = nbits / 4;
 
     hex = (char *)malloc(len + 1);
@@ -136,8 +181,13 @@ char* Blockhash::bits_to_hexhash(int *bits, int nbits)
 	myfile.close();
 
     free(stmp);
-    return hex;
+    free(hex);
+    return 0;
 }
+/*
+ * Divide image into blocks and compute its sum
+ */
+
 void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, int *hash)
 {
     int    x, y, ix, iy;
@@ -165,6 +215,9 @@ void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, in
     translate_blocks_to_bits(blocks,bits*bits,block_height*block_width,hash);
 }
 
+/*
+ * Compare two hashesh
+ */
 float Blockhash::compare_hash(string const &hash_file1,string const &hash_file2)
 {
 	string line,line1;
@@ -172,21 +225,25 @@ float Blockhash::compare_hash(string const &hash_file1,string const &hash_file2)
 	int count;
 	ifstream hashfile(hash_file1.c_str());
 	ifstream hash(hash_file2.c_str());
-
+    set_err(false);
 	/* Read Hash file */
 	if(!hashfile.is_open()){
-		log_E("Unable to open file\n");
+        set_err(true,"Unable to open file: "+hash_file1);
 		return -1;
 		}
 
 	if(!hash.is_open()){
 		//TODO Set Error for GUI
-		log_E("Unable to open file\n");
+        set_err(true,"Unable to open file: "+hash_file2);
 		return -1;
 		}
-
+    /* Read line from hash size and compare bitwise*/
 	while(getline(hashfile,line)){
 		while(getline(hash,line1)){
+            if(line.length()!=line1.length()){
+                set_err(true,"Hash size are different, cannot compare");
+                return -1;
+            }
             count=0;
             if(line.compare(line1)==0){
                 perc=100;
@@ -200,6 +257,7 @@ float Blockhash::compare_hash(string const &hash_file1,string const &hash_file2)
                 if(curr_per > perc)
                     perc=curr_per;
                 }
+            /* If both hashes matched, avoid further computing */
             if(perc==100)
                break;
             }
