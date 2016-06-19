@@ -27,8 +27,9 @@ Blockhash::~Blockhash()
 {
 
 }
+
 /*
- * Set error string
+ * Setter for error message
  */
 bool Blockhash::set_err(bool error,string err_msg="")
 {
@@ -38,8 +39,9 @@ bool Blockhash::set_err(bool error,string err_msg="")
         log_E(err_msg);
     return true;
 }
+
 /*
- * Get any error
+ * Getter for error message
  */
 string Blockhash::get_err()
 {
@@ -55,17 +57,25 @@ float Blockhash::median(Quantum *data, int n)
     float result;
 
     log_D("Computing Median");
-    sorted = (Quantum *)malloc(n * sizeof(Quantum));
+
+    /* Sorting numbers in temporary array to find median */
+    sorted = new Quantum[n];
     memcpy(sorted, data, n * sizeof(Quantum));
     qsort(sorted, n, sizeof(Quantum), cmpfloat);
+
+
+    /* If number of elements are even then take average of two
+     * middle numbers
+     */
 
     if (n % 2 == 0) {
         result = (float) (sorted[n / 2] + sorted[n / 2 + 1]) / 2;
     } else {
         result = (float) sorted[n / 2];
     }
+
     log_D("Median is "<<result);
-    free(sorted);
+    delete sorted;
     return result;
 }
 
@@ -86,20 +96,20 @@ int Blockhash::process_image(string const &fn, int bits)
 	f.open(HASH_FILE, fstream::out | fstream::trunc);
 	f.close();
     set_err(false);
-    for(i=0;i<=5;i++){
+    for(i=0;i<=18;i++){
 		dup = image;
 		dup.modifyImage();
 		dup.rotate(i*ROT_DELTA); //Rotation with 0,15,30,45,
 		width = dup.size().width();
 		height = dup.size().height();
 		Quantum *pixel_cache = dup.getPixels(0,0,width,height);
-		hash = (int *)malloc(bits * bits * sizeof(int));
+        hash = new int[bits*bits];
 		blockhash_int(bits, pixel_cache, width, height, hash);
         if(bits_to_hexhash(hash,bits*bits)!=0){
-            free(hash);
+            delete hash;
             return 1;
         }
-		free(hash);
+        delete hash;
 	}
     return 0;
 }
@@ -121,6 +131,7 @@ int Blockhash::print_quantum(Quantum *pixel_cache,int width,int height){
 		}
 	return 0;
 	}
+
 /*
  * Convert each block to 1 or 0 depending upon meadin of band
  */
@@ -162,8 +173,8 @@ int Blockhash::bits_to_hexhash(int *bits, int nbits)
     }
     len = nbits / 4;
 
-    hex = (char *)malloc(len + 1);
-    stmp = (char *)malloc(2);
+    hex = new char[len+1];
+    stmp = new char[2];
     hex[len] = '\0';
 
     for (i = 0; i < len; i++) {
@@ -180,14 +191,14 @@ int Blockhash::bits_to_hexhash(int *bits, int nbits)
 	myfile<<endl;
 	myfile.close();
 
-    free(stmp);
-    free(hex);
+    delete stmp;
+    delete hex;
     return 0;
 }
+
 /*
  * Divide image into blocks and compute its sum
  */
-
 void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, int *hash)
 {
     int    x, y, ix, iy;
@@ -199,7 +210,9 @@ void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, in
 
     block_width = width / bits;
     block_height = height / bits;
-    blocks = (Quantum *)calloc(bits * bits, sizeof(Quantum));
+
+    /* This will also initialize allocated memory to 0 */
+    blocks = new Quantum[bits*bits]();
     for (y = 0; y < bits; y++) {
         for (x = 0; x < bits; x++) {
             value = 0;
@@ -216,7 +229,7 @@ void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, in
 }
 
 /*
- * Compare two hashesh
+ * Compare two hashes
  */
 float Blockhash::compare_hash(string const &hash_file1,string const &hash_file2)
 {

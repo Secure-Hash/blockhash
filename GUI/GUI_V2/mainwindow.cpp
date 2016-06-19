@@ -131,7 +131,7 @@ void MainWindow::on_btn_comparehash_clicked()
         stringstream str_result (stringstream::in | stringstream::out);
         str_result<<result;
         QString msg = QString::fromStdString(str_result.str());
-        QMessageBox::information(this,("Comparison "),"Similarity: "+msg);
+        QMessageBox::information(this,("Comparison "),"Similarity: "+msg+"%\n Threshold set to 70%");
         on_btn_reset_2_clicked();
     }
 }
@@ -141,7 +141,7 @@ void MainWindow::on_btn_save_clicked()
     QString filename = QFileDialog::getSaveFileName(
             this,
             ("Save Hash"),
-            QDir::homePath(),
+            "",
             ("Documents (*.txt)"));
     ui->savefilename->setText(filename+".asc");
 
