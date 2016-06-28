@@ -19,7 +19,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_btn_generatehash_clicked()
 {
-    dialog.setLabelText(QString("Progressing..."));
+    dialog.setLabelText(QString("Generating hash..."));
+    dialog.setCancelButton(0);
     QFutureWatcher<int> futureWatcher;
     QObject::connect(&futureWatcher, SIGNAL(finished()), &dialog, SLOT(reset()));
     QObject::connect(&dialog, SIGNAL(canceled()), &futureWatcher, SLOT(cancel()));
