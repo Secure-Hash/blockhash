@@ -107,27 +107,36 @@ int Blockhash::process_image(string const &fn, int bits)
     float progress = 0;
     size_t width, height;
     int *hash;
-    Image image;
-    Image dup;
-    image.read(fn.c_str());
-    image.modifyImage();
-    image.type(TrueColorType);
+    Image image; //Original image
+    Image dup; //Duplicate image
+    image.read(fn.c_str()); //Read image
+    image.modifyImage(); // Set modification flag to sync pixels after modification
+    image.type(TrueColorType); //Set color to RGB format
 	fstream f;
-	f.open(HASH_FILE, fstream::out | fstream::trunc);
+    f.open(HASH_FILE, fstream::out | fstream::trunc); // Create tem hash file
 	f.close();
-    set_err(false);
-    set_progress(progress);
+    set_err(false); //Reset error flag
+    set_progress(progress); //Set current porgress
     for(i=0;i<=18;i++){
-		dup = image;
+        /* Rotate image by multiples ROT_DELTA degree */
+        dup = image;
 		dup.modifyImage();
         dup.rotate(i*ROT_DELTA); //Rotation with 0,15,30,45
-		width = dup.size().width();
+
+        /* Get image width and height */
+        width = dup.size().width();
 		height = dup.size().height();
+
+        /* Get pixels value */
 		Quantum *pixel_cache = dup.getPixels(0,0,width,height);
+
+        /* Compute hash */
         hash = new int[bits*bits];
 		blockhash_int(bits, pixel_cache, width, height, hash);
         progress += (float)18/5;
         set_progress(progress);
+
+        /* Convert bit hash to hexadecimal */
         if(bits_to_hexhash(hash,bits*bits)!=0){
             delete hash;
             return 1;
@@ -163,12 +172,21 @@ int Blockhash::translate_blocks_to_bits(Quantum *blocks, int nblocks, int pixels
     Quantum half_block_value;
     Quantum v,m;
     int bandsize, i, j;
-
+    /* Compute half block value
+     * Half Block Value: Half of maximum sum possible of block
+     */
     half_block_value = pixels_per_block * CDEPTH * PIXEL_SIZE / 2; // For current configuration its 65536
     bandsize = nblocks / N_BANDS;
 
+    /* Compute hash for bands instead of whole image */
     for (i = 0; i < N_BANDS; i++) {
+        /* Compute median of band */
         m = median(&blocks[i * bandsize], bandsize);
+
+        /*
+         * Hash value is 1: if (Block value > Median) or ((Diff between median and block value
+         * is less than 1) and (median is greater than block value))
+         */
         for (j = i * bandsize; j < (i + 1) * bandsize; j++) {
             v = blocks[j];
             hash[j] = v > m || (abs(v - m) < 1 && m > half_block_value);
@@ -188,8 +206,11 @@ int Blockhash::bits_to_hexhash(int *bits, int nbits)
     char  *hex;
     char  *stmp;
     set_err(false);
+    /* Create temp directory to write intermediate hash files */
     mkdir(CDATA_DIR, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	ofstream myfile;
+
+    /* Open file in write mode to write hash into file */
     myfile.open (HASH_FILE, ios::out | ios::app);
     if(!myfile.is_open()){
         set_err(true,"Unable to open file for writing hash");
@@ -201,6 +222,7 @@ int Blockhash::bits_to_hexhash(int *bits, int nbits)
     stmp = new char[2];
     hex[len] = '\0';
 
+    /* Convert bits to hexadecimal */
     for (i = 0; i < len; i++) {
         tmp = 0;
         for (j = 0; j < 4; j++) {
@@ -208,6 +230,7 @@ int Blockhash::bits_to_hexhash(int *bits, int nbits)
             tmp = tmp | (bits[b] << 3 >> j);
         }
 
+        /* Write hash to file */
         sprintf(stmp, "%1x", tmp);
         hex[i] = stmp[0];
         myfile<<hex[i];
@@ -232,20 +255,24 @@ int Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, int
     Quantum  *blocks;
     Quantum  value;
 
+    /* Height and width of each block */
     block_width = width / bits;
     block_height = height / bits;
 
     /* This will also initialize allocated memory to 0 */
     blocks = new Quantum[bits*bits]();
+
     for (y = 0; y < bits; y++) {
         for (x = 0; x < bits; x++) {
             value = 0;
+            /* Process each block to compute its value*/
             for (iy = 0; iy < block_height; iy++) {
                 for (ix = 0; ix < block_width; ix++) {
                     ii = ((y * block_height + iy) * width + (x * block_width + ix)) * PIXEL_SIZE;
 					value += data[ii] + data[ii+1] + data[ii+2];
                 }
             }
+            /* Note down value of block */
             blocks[y * bits + x] = value;
         }
     }
@@ -263,33 +290,40 @@ float Blockhash::compare_hash(string const &hash_file1,string const &hash_file2)
 	ifstream hashfile(hash_file1.c_str());
 	ifstream hash(hash_file2.c_str());
     set_err(false);
-	/* Read Hash file */
+
+    /* Read Hash file */
 	if(!hashfile.is_open()){
         set_err(true,"Unable to open file: "+hash_file1);
 		return -1;
 		}
 
 	if(!hash.is_open()){
-		//TODO Set Error for GUI
         set_err(true,"Unable to open file: "+hash_file2);
 		return -1;
 		}
-    /* Read line from hash size and compare bitwise*/
+
+    /* Read line from hash size and compare bitwise */
 	while(getline(hashfile,line)){
 		while(getline(hash,line1)){
+            /* If hash length is of different size then give error */
             if(line.length()!=line1.length()){
-                set_err(true,"Hash size are different, cannot compare");
+                set_err(true,"Hash sizes are different, cannot compare");
                 return -1;
             }
             count=0;
+
+            /* If complete line matches then 100% match */
             if(line.compare(line1)==0){
                 perc=100;
             }
             else{
+                /* Compare bit by bit */
                 for(unsigned int i=0;i<line1.length();i++){
                     if(line[i]==line1[i])
                     count++;
                 }
+
+                /* Return max percentage */
                 curr_per=((float)count/line1.length()) *100;
                 if(curr_per > perc)
                     perc=curr_per;
