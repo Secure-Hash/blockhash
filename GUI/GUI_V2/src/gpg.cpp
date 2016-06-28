@@ -40,7 +40,7 @@ bool Gpg::verify(const string& fin,const string& fout)
 
     /* Complete above partial command */
 
-	string command = verify_cmd + fout + " " + fin + DEV_NULL;
+    string command = verify_cmd + +"'"+fout + "' '" + fin + "'" + DEV_NULL;
 
     /* Check if input file exists */
 	if(!exists(fin)){
@@ -71,7 +71,7 @@ bool Gpg::generate(const string& fin,const string& fout)
 {
 	int status;
 	set_err(false);
-	string command = gen_cmd + fout + " " + fin + DEV_NULL;
+    string command = gen_cmd + +"'"+fout + "' '" + fin +"'"+ DEV_NULL;
 	log_D("Generating Signature, Input: "+fin+", Output:"+fout);
 	log_D("[CMD] "+command);
 	if(!exists(fin)){
@@ -84,7 +84,7 @@ bool Gpg::generate(const string& fin,const string& fout)
 	if(status!=0){
         stringstream ss;
         ss << status;
-        set_err(true,"Exit code from hash generation: "+ ss.str());
+        set_err(true,"Unable to sign generated hash: "+ ss.str());
 		return false;
 		}
 	return true;
