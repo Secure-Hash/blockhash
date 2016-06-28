@@ -1,5 +1,5 @@
 #include <gpg.h>
-
+#include <sstream> //for stringstream
 
 Gpg::Gpg()
 {
@@ -38,7 +38,7 @@ bool Gpg::verify(const string& fin,const string& fout)
 	remove(COUT_PATH); //No need to handle removal of directory
 	mkdir(COUT_PATH,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); //Assume directory created successfully
 
-	/* Complete partial command */
+    /* Complete above partial command */
 
 	string command = verify_cmd + fout + " " + fin + DEV_NULL;
 
@@ -51,7 +51,7 @@ bool Gpg::verify(const string& fin,const string& fout)
 
 	/* Fork shell and execute command as seprate process on bash */
 	if(system(command.c_str())!=0){
-		set_err(true,"Invalid signature");
+        set_err(true,"Invalid signature");
 		return false;
 		}
 
@@ -82,7 +82,9 @@ bool Gpg::generate(const string& fin,const string& fout)
 	/* Execute hash generation command on bash  and check status*/
 	status=system(command.c_str());
 	if(status!=0){
-		set_err(true,"Exit code from hash generation"+ status);
+        stringstream ss;
+        ss << status;
+        set_err(true,"Exit code from hash generation: "+ ss.str());
 		return false;
 		}
 	return true;

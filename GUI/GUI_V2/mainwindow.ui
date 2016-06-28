@@ -416,6 +416,21 @@ background-color: rgb(255, 255, 255);</string>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>btn_browse</tabstop>
+  <tabstop>btn_save</tabstop>
+  <tabstop>hashsize</tabstop>
+  <tabstop>btn_generatehash</tabstop>
+  <tabstop>btn_reset</tabstop>
+  <tabstop>btn_browse_2</tabstop>
+  <tabstop>btn_browse_3</tabstop>
+  <tabstop>btn_comparehash</tabstop>
+  <tabstop>btn_reset_2</tabstop>
+  <tabstop>filepath</tabstop>
+  <tabstop>savefilename</tabstop>
+  <tabstop>hash1</tabstop>
+  <tabstop>hash2</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
