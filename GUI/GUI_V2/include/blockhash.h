@@ -24,8 +24,9 @@ class Blockhash{
         const char *HASH_FILE; //Intermediate hash file before signing
         bool error; //Error flag
         string err_msg; // Error message
+        float progress; //Current progress
         bool set_err(bool error,string err_msg); //Error message setter
-
+        int set_progress(float progress); //Setter for progress
     public:
         Blockhash(); // Constructor
         ~Blockhash(); // Destructor
@@ -37,6 +38,7 @@ class Blockhash{
         int bits_to_hexhash(int *bits, int nbits); // Bits to hexadecimal
         float compare_hash(string const &hash_file1,string const &hash_file2); // Compare two hash files
         string get_err(); //Getter for error message
+        float get_progress(); //Getter for progress
 	};
 
 #endif

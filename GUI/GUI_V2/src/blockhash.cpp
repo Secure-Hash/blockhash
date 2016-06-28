@@ -49,7 +49,26 @@ string Blockhash::get_err()
 }
 
 /*
- * Compute meadian of data
+ * Setter for progres
+ */
+int Blockhash::set_progress(float progress)
+{
+    this->progress = progress >= 100.0f? 100.0f: progress;
+    return 0;
+}
+
+/*
+ * Getter for progress
+ */
+
+float Blockhash::get_progress()
+{
+    return progress;
+}
+
+
+/*
+ *  Compute meadian of data
  */
 float Blockhash::median(Quantum *data, int n)
 {
@@ -85,6 +104,7 @@ float Blockhash::median(Quantum *data, int n)
 int Blockhash::process_image(string const &fn, int bits)
 {
     int i;
+    float progress = 0;
     size_t width, height;
     int *hash;
     Image image;
@@ -96,15 +116,18 @@ int Blockhash::process_image(string const &fn, int bits)
 	f.open(HASH_FILE, fstream::out | fstream::trunc);
 	f.close();
     set_err(false);
+    set_progress(progress);
     for(i=0;i<=18;i++){
 		dup = image;
 		dup.modifyImage();
-		dup.rotate(i*ROT_DELTA); //Rotation with 0,15,30,45,
+        dup.rotate(i*ROT_DELTA); //Rotation with 0,15,30,45
 		width = dup.size().width();
 		height = dup.size().height();
 		Quantum *pixel_cache = dup.getPixels(0,0,width,height);
         hash = new int[bits*bits];
 		blockhash_int(bits, pixel_cache, width, height, hash);
+        progress += (float)18/5;
+        set_progress(progress);
         if(bits_to_hexhash(hash,bits*bits)!=0){
             delete hash;
             return 1;
@@ -135,7 +158,7 @@ int Blockhash::print_quantum(Quantum *pixel_cache,int width,int height){
 /*
  * Convert each block to 1 or 0 depending upon meadin of band
  */
-void Blockhash::translate_blocks_to_bits(Quantum *blocks, int nblocks, int pixels_per_block, int *hash)
+int Blockhash::translate_blocks_to_bits(Quantum *blocks, int nblocks, int pixels_per_block, int *hash)
 {
     Quantum half_block_value;
     Quantum v,m;
@@ -151,6 +174,7 @@ void Blockhash::translate_blocks_to_bits(Quantum *blocks, int nblocks, int pixel
             hash[j] = v > m || (abs(v - m) < 1 && m > half_block_value);
         }
     }
+    return 0;
 }
 
 /*
@@ -199,7 +223,7 @@ int Blockhash::bits_to_hexhash(int *bits, int nbits)
 /*
  * Divide image into blocks and compute its sum
  */
-void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, int *hash)
+int Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, int *hash)
 {
     int    x, y, ix, iy;
     int    ii;
@@ -225,7 +249,7 @@ void Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, in
             blocks[y * bits + x] = value;
         }
     }
-    translate_blocks_to_bits(blocks,bits*bits,block_height*block_width,hash);
+    return translate_blocks_to_bits(blocks,bits*bits,block_height*block_width,hash);
 }
 
 /*

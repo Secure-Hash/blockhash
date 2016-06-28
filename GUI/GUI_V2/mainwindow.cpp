@@ -23,6 +23,8 @@ void MainWindow::on_btn_generatehash_clicked()
         QMessageBox::warning(this,("Error Message"),"Kindly browse Image");
     else if(ui->hashsize->currentIndex()==0)
         QMessageBox::warning(this,("Error Message"),"Kindly select hash size");
+    else if(ui->savefilename->text()=="")
+        QMessageBox::warning(this,("Error Message"),"Select destination to save hash");
     else
     {
         QMessageBox::information(this,("In Progress"),"This may take few minutes.\nPress Ok to continue");
@@ -37,7 +39,6 @@ void MainWindow::on_btn_generatehash_clicked()
         if(result)
         {
             QMessageBox::information(this,("Signature generated"),"Image hash generated successfully");
-            on_btn_reset_clicked();
         }
         else{
             QMessageBox::critical(this,("Signature generation failed"),QString::fromStdString(gpg.get_err()));
@@ -54,18 +55,21 @@ void MainWindow::on_btn_reset_clicked()
        ui->labelimage->setText("");
        QPixmap px;
        ui->labelimage->setPixmap(px);
-       ui->hashsize->setCurrentIndex(0);
+       ui->hashsize->setCurrentIndex(4);
        ui->savefilename->setText("");
 }
 
 void MainWindow::on_btn_browse_clicked()
 {
-    QString filename=QFileDialog::getOpenFileName(this,("Open File"),"",("Image Files (*.png *.jpg)"));
+    QString filename=QFileDialog::getOpenFileName(this,("Open File"),"",("Image Files (*.png *.jpg *.jpeg)"));
     ui->filepath->setText("");
     QString pic=filename;
     if(pic != ""){
         ui->filepath->setText(pic);
         QPixmap pix(pic);
+        int lastIndex = pic.lastIndexOf(".")+1;
+        pic.remove(lastIndex,pic.length()-lastIndex);
+        ui->savefilename->setText(pic.append("asc"));
         int w = ui->labelimage->width();
         int h = ui->labelimage->height();
         ui->labelimage->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
@@ -141,8 +145,14 @@ void MainWindow::on_btn_save_clicked()
     QString filename = QFileDialog::getSaveFileName(
             this,
             ("Save Hash"),
-            "",
-            ("Documents (*.txt)"));
-    ui->savefilename->setText(filename+".asc");
+            ui->savefilename->text(),
+            ("Documents (*.asc)"));
+    if(filename==""){
+      return;
+    }
 
+    if(!filename.contains(".asc")){
+        filename.append(".asc");
+    }
+    ui->savefilename->setText(filename);
 }
