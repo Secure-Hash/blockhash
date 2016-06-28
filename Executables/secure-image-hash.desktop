@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=secure-image-hash
+Comment=A sample application
+Exec=/home/master/SmartImageComparison
+Icon=/home/master/application.png
+Terminal=true
+Name[en_IN]=secure-image-hash
