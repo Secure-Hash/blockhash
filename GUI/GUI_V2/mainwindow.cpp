@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <sstream>
 
+/* Setup GUI */
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -11,22 +12,28 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 }
 
+/* Destructor for GUI */
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
-
+/* Slot for hash generation */
 void MainWindow::on_btn_generatehash_clicked()
 {
+    /* Set progress bar */
     dialog.setLabelText(QString("Generating hash..."));
     dialog.setCancelButton(0);
+    dialog.setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+
+    /* Watcher for asynchronous computation of hash generation*/
     QFutureWatcher<int> futureWatcher;
     QObject::connect(&futureWatcher, SIGNAL(finished()), &dialog, SLOT(reset()));
     QObject::connect(&dialog, SIGNAL(canceled()), &futureWatcher, SLOT(cancel()));
     QObject::connect(&futureWatcher, SIGNAL(progressRangeChanged(int,int)), &dialog, SLOT(setRange(int,int)));
     QObject::connect(&futureWatcher, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
 
+    /* Validate parameters before proceeding to hash generation */
     if(ui->filepath->text()=="")
         QMessageBox::warning(this,("Error Message"),"Kindly browse Image");
     else if(ui->hashsize->currentIndex()==0)
@@ -38,7 +45,6 @@ void MainWindow::on_btn_generatehash_clicked()
         QMessageBox::information(this,("In Progress"),"This may take few minutes.\nPress Ok to continue");
         int hashsize = (int)sqrt(atof(ui->hashsize->currentText().toStdString().c_str()));
 
-        //int res = bh.process_image(ui->filepath->text().toStdString(),hashsize);
         QFuture<int> future=(QtConcurrent::run(bh,&Blockhash::process_image,ui->filepath->text().toStdString(),hashsize));
                    futureWatcher.setFuture(future);
                    dialog.exec();
