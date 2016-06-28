@@ -42,19 +42,23 @@ void MainWindow::on_btn_generatehash_clicked()
         QMessageBox::warning(this,("Error Message"),"Select destination to save hash");
     else
     {
+        /* Information box */
         QMessageBox::information(this,("In Progress"),"This may take few minutes.\nPress Ok to continue");
         int hashsize = (int)sqrt(atof(ui->hashsize->currentText().toStdString().c_str()));
 
+        /* Asynchronous computation of hash */
         QFuture<int> future=(QtConcurrent::run(bh,&Blockhash::process_image,ui->filepath->text().toStdString(),hashsize));
                    futureWatcher.setFuture(future);
                    dialog.exec();
-
+        /* Wait for result and take corrective action */
         int res = 1;
         res = future.result();
         if(res!=0){
             QMessageBox::critical(this,("Has generation failed"),QString::fromStdString(bh.get_err()));
             return;
         }
+
+        /* Sign generated hash with own private key */
         bool result = gpg.generate(CHASH_FILE,ui->savefilename->text().toStdString());
         if(result)
         {
@@ -65,31 +69,37 @@ void MainWindow::on_btn_generatehash_clicked()
         }
         futureWatcher.waitForFinished();
     }
-
-    //call our function and pass two has file path
 }
 
+/* Reset user input form for hash generation */
 void MainWindow::on_btn_reset_clicked()
 {
        ui->filepath->setText("");
        ui->labelimage->setText("");
        QPixmap px;
        ui->labelimage->setPixmap(px);
-       ui->hashsize->setCurrentIndex(4);
+       ui->hashsize->setCurrentIndex(1);
        ui->savefilename->setText("");
 }
 
+/* Slot for browsing image */
 void MainWindow::on_btn_browse_clicked()
 {
-    QString filename=QFileDialog::getOpenFileName(this,("Open File"),"",("Image Files (*.png *.jpg *.jpeg)"));
+    /* Open file dialog box in home directory */
+    QString filename=QFileDialog::getOpenFileName(this,("Open File"),QDir::homePath(),("Image Files (*.png *.jpg *.jpeg)"));
     ui->filepath->setText("");
     QString pic=filename;
     if(pic != ""){
+        /* Set image path in text field */
         ui->filepath->setText(pic);
         QPixmap pix(pic);
+
+        /* Set default save path */
         int lastIndex = pic.lastIndexOf(".")+1;
         pic.remove(lastIndex,pic.length()-lastIndex);
         ui->savefilename->setText(pic.append("asc"));
+
+        /* Display image preview */
         int w = ui->labelimage->width();
         int h = ui->labelimage->height();
         ui->labelimage->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
@@ -99,69 +109,92 @@ void MainWindow::on_btn_browse_clicked()
     }
 }
 
+/* Slot to choose first signed hash file for comparison */
 void MainWindow::on_btn_browse_2_clicked()
 {
-    QString filename=QFileDialog::getOpenFileName(this,("Open File"),"",("Hash Files (*.asc)"));
+    /* Open file dialog box to choose file */
+    QString filename=QFileDialog::getOpenFileName(this,("Open File"),QDir::homePath(),("Hash Files (*.asc)"));
     ui->hash1->setText("");
+
+    /* Set hash file path in text field */
     if(filename != "")
         ui->hash1->setText(filename);
     else
         QMessageBox::information(this,(""),"Please select file from your computer");
 }
 
+/* Slot to choose second signed hash file for comparison */
 void MainWindow::on_btn_browse_3_clicked()
 {
+    /* Open file dialog box to choose file */
     QString filename=QFileDialog::getOpenFileName(this,("Open File"),"",("Hash Files (*.asc)"));
     ui->hash2->setText("");
+    /* Set hash file path in text field */
     if(filename != "")
         ui->hash2->setText(filename);
     else
         QMessageBox::information(this,("Error Message"),"Please select file from your computer");
 }
 
+/* Slot to reset user input form of hash comparison */
 void MainWindow::on_btn_reset_2_clicked()
 {
     ui->hash1->setText("");
     ui->hash2->setText("");
 }
 
+/* Slot to compare two hash files */
 void MainWindow::on_btn_comparehash_clicked()
 {
+    /* User input validation */
     if(ui->hash1->text()=="")
         QMessageBox::warning(this,("Error Message"),"Hash 1 is empty");
     else if(ui->hash2->text()=="")
             QMessageBox::warning(this,("Error Message"),"Hash 2 is empty");
     else
     {
+        /* Hash comaprison */
         string fin1=ui->hash1->text().toStdString();
         string fin2=ui->hash2->text().toStdString();
         string hash_file1= ".data/hash_file1";
         string hash_file2= ".data/hash_file2";
+
+        /* Decrypt first hash file and verify its authenticity using signature */
         if(!gpg.verify(fin1,hash_file1)){
-            log_E("Bad signature");
-            QMessageBox::critical(this,("Verification "),"Bad signature");
+            QString error = "Bad signature "+QString::fromStdString(fin1);
+            log_E(error.toStdString());
+            QMessageBox::critical(this,("Verification "),error);
             return;
             }
+
+         /* Decrypt second hash file and verify its authenticity using signature */
         if(!gpg.verify(fin2,hash_file2)){
-            log_E("Bad signature");
-            QMessageBox::critical(this,("Verification "),"Bad signature");
+            QString error = "Bad signature "+QString::fromStdString(fin2);
+            log_E(error.toStdString());
+            QMessageBox::critical(this,("Verification "),error);
             return;
             }
+
+        /* Compare both the hashesh */
         float result = bh.compare_hash(hash_file1,hash_file2);
         if(result==-1){
              QMessageBox::critical(this,("Comparison "),QString::fromStdString(bh.get_err()));
              return;
         }
+
+        /* Show results */
         stringstream str_result (stringstream::in | stringstream::out);
         str_result<<result;
         QString msg = QString::fromStdString(str_result.str());
         QMessageBox::information(this,("Comparison "),"Similarity: "+msg+"%\n Threshold set to 70%");
-        on_btn_reset_2_clicked();
+
     }
 }
 
+/* Slot to specify save location of hash file*/
 void MainWindow::on_btn_save_clicked()
 {
+    /* Save file dialog box */
     QString filename = QFileDialog::getSaveFileName(
             this,
             ("Save Hash"),
@@ -170,7 +203,7 @@ void MainWindow::on_btn_save_clicked()
     if(filename==""){
       return;
     }
-
+    /* Append extension to file */
     if(!filename.contains(".asc")){
         filename.append(".asc");
     }
