@@ -3,6 +3,7 @@
 
 #define CPIXEL_SIZE     3
 #define CROT_DELTA 		5
+#define CNUM_ROT        19
 #define CDEPTH          65536
 #define COUT_PATH       ".data/"
 #define CHASH_FILE		".data/hash.txt"

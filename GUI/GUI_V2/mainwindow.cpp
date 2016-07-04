@@ -28,13 +28,6 @@ void MainWindow::on_btn_generatehash_clicked()
     dialog.setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
     dialog.setMinimumWidth(300);
 
-    /* Watcher for asynchronous computation of hash generation*/
-    QFutureWatcher<int> futureWatcher;
-    QObject::connect(&futureWatcher, SIGNAL(finished()), &dialog, SLOT(reset()));
-    QObject::connect(&dialog, SIGNAL(canceled()), &futureWatcher, SLOT(cancel()));
-    QObject::connect(&futureWatcher, SIGNAL(progressRangeChanged(int,int)), &dialog, SLOT(setRange(int,int)));
-    QObject::connect(&futureWatcher, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
-
     /* Validate parameters before proceeding to hash generation */
     if(ui->filepath->text()=="")
         QMessageBox::warning(this,("Error Message"),"Kindly browse Image");
@@ -44,17 +37,34 @@ void MainWindow::on_btn_generatehash_clicked()
         QMessageBox::warning(this,("Error Message"),"Select destination to save hash");
     else
     {
-        /* Information box */
-        //QMessageBox::information(this,("In Progress"),"This may take few minutes.\nPress Ok to continue");
+        /* Set image path and hashsize */
         int hashsize = (int)sqrt(atof(ui->hashsize->currentText().toStdString().c_str()));
+        bh.init_compute_hash(ui->filepath->text().toStdString(),hashsize);
 
-        /* Asynchronous computation of hash */
-        QFuture<int> future=(QtConcurrent::run(bh,&Blockhash::process_image,ui->filepath->text().toStdString(),hashsize));
-                   futureWatcher.setFuture(future);
-                   dialog.exec();
+        /* Create thread and connect all signals to respective slots */
+        QThread thread;
+        connect(&thread, SIGNAL(started()), &bh, SLOT(compute_hash()));
+        connect(&bh, SIGNAL(finished()), &thread, SLOT(quit()));
+        connect(&bh, SIGNAL(finished()), &dialog, SLOT(reset()));
+        connect(&bh, SIGNAL(progressRangeChanged(int,int)), &dialog, SLOT(setRange(int,int)));
+        connect(&bh, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
+
+        /* Move blockhash object to new thread */
+        bh.moveToThread(&thread);
+
+        /* Start thread */
+        thread.start();
+
+        /* Show progress dialog box */
+        dialog.exec();
+
+        /* Wait to finist end work */
+        while(thread.isRunning())
+        {
+            sleep(1);
+        }
         /* Wait for result and take corrective action */
-        int res = 1;
-        res = future.result();
+        int res = bh.get_result();
         if(res!=0){
             QMessageBox::critical(this,("Has generation failed"),QString::fromStdString(bh.get_err()));
             return;
@@ -69,7 +79,6 @@ void MainWindow::on_btn_generatehash_clicked()
         else{
             QMessageBox::critical(this,("Signature generation failed"),QString::fromStdString(gpg.get_err()));
         }
-        futureWatcher.waitForFinished();
     }
 }
 

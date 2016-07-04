@@ -14,18 +14,13 @@ static int cmpfloat(const void *pa, const void *pb)
 /*
  * Public constructor
  */
-Blockhash::Blockhash():PIXEL_SIZE(CPIXEL_SIZE), ROT_DELTA(CROT_DELTA), OUT_PATH(COUT_PATH), HASH_FILE(CHASH_FILE)
+Blockhash::Blockhash():PIXEL_SIZE(CPIXEL_SIZE), ROT_DELTA(CROT_DELTA), OUT_PATH(COUT_PATH), HASH_FILE(CHASH_FILE), NUM_ROT(CNUM_ROT)
 {
     error = false;
     err_msg	= "";
-}
-
-/*
- * Public Destructor
- */
-Blockhash::~Blockhash()
-{
-
+    img_path = "";
+    num_hash_bits = 256;
+    result = 1;
 }
 
 /*
@@ -51,9 +46,10 @@ string Blockhash::get_err()
 /*
  * Setter for progres
  */
-int Blockhash::set_progress(float progress)
+int Blockhash::set_progress(int progress)
 {
-    this->progress = progress >= 100.0f? 100.0f: progress;
+    this->progress = progress;
+    emit progressValueChanged(this->progress);
     return 0;
 }
 
@@ -61,11 +57,19 @@ int Blockhash::set_progress(float progress)
  * Getter for progress
  */
 
-float Blockhash::get_progress()
+int Blockhash::get_progress()
 {
     return progress;
 }
 
+/*
+ *  Returns result of hash computation
+ */
+
+int Blockhash::get_result()
+{
+    return result;
+}
 
 /*
  *  Compute meadian of data
@@ -98,13 +102,31 @@ float Blockhash::median(Quantum *data, int n)
     return result;
 }
 
+int Blockhash::init_compute_hash(string const &fn, int bits)
+{
+    img_path = fn;
+    num_hash_bits = bits;
+    return 0;
+}
+
+void Blockhash::compute_hash()
+{
+    if(img_path!=""){
+        result = compute_hash(img_path,num_hash_bits);
+    }
+    else{
+        result = 1;
+    }
+}
+
 /*
  * Process image and compute its hash
  */
-int Blockhash::process_image(string const &fn, int bits)
+int Blockhash::compute_hash(string const &fn, int bits)
 {
     int i;
-    float progress = 0;
+    int progress = 0;
+    result = 1;
     size_t width, height;
     int *hash;
     Image image; //Original image
@@ -116,8 +138,9 @@ int Blockhash::process_image(string const &fn, int bits)
     f.open(HASH_FILE, fstream::out | fstream::trunc); // Create tem hash file
 	f.close();
     set_err(false); //Reset error flag
+    emit progressRangeChanged(0,NUM_ROT);
     set_progress(progress); //Set current porgress
-    for(i=0;i<=18;i++){
+    for(i=0;i<NUM_ROT;i++){
         /* Rotate image by multiples ROT_DELTA degree */
         dup = image;
 		dup.modifyImage();
@@ -133,17 +156,20 @@ int Blockhash::process_image(string const &fn, int bits)
         /* Compute hash */
         hash = new int[bits*bits];
 		blockhash_int(bits, pixel_cache, width, height, hash);
-        progress += (float)18/5;
-        set_progress(progress);
-
         /* Convert bit hash to hexadecimal */
         if(bits_to_hexhash(hash,bits*bits)!=0){
             delete hash;
-            return 1;
+            result = 1;
+            emit finished();
+            return result;
         }
         delete hash;
+        progress += 1;
+        set_progress(progress);
 	}
-    return 0;
+    result = 0;
+    emit finished();
+    return result;
 }
 
 /*
