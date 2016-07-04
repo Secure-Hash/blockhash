@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <sstream>
+#include <unistd.h>
 
 /* Setup GUI */
 MainWindow::MainWindow(QWidget *parent) :
@@ -25,6 +26,7 @@ void MainWindow::on_btn_generatehash_clicked()
     dialog.setLabelText(QString("Generating hash..."));
     dialog.setCancelButton(0);
     dialog.setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+    dialog.setMinimumWidth(300);
 
     /* Watcher for asynchronous computation of hash generation*/
     QFutureWatcher<int> futureWatcher;
@@ -43,7 +45,7 @@ void MainWindow::on_btn_generatehash_clicked()
     else
     {
         /* Information box */
-        QMessageBox::information(this,("In Progress"),"This may take few minutes.\nPress Ok to continue");
+        //QMessageBox::information(this,("In Progress"),"This may take few minutes.\nPress Ok to continue");
         int hashsize = (int)sqrt(atof(ui->hashsize->currentText().toStdString().c_str()));
 
         /* Asynchronous computation of hash */
@@ -86,8 +88,11 @@ void MainWindow::on_btn_reset_clicked()
 void MainWindow::on_btn_browse_clicked()
 {
     /* Open file dialog box in home directory */
-    QString filename=QFileDialog::getOpenFileName(this,("Open File"),QDir::homePath(),("Image Files (*.png *.jpg *.jpeg)"));
-    ui->filepath->setText("");
+    QString filePath = ui->filepath->text();
+    if(filePath==""){
+        filePath = QDir::homePath();
+    }
+    QString filename=QFileDialog::getOpenFileName(this,("Open File"),filePath,("Image Files (*.png *.jpg *.jpeg)"));
     QString pic=filename;
     if(pic != ""){
         /* Set image path in text field */
@@ -104,7 +109,7 @@ void MainWindow::on_btn_browse_clicked()
         int h = ui->labelimage->height();
         ui->labelimage->setPixmap(pix.scaled(w,h,Qt::KeepAspectRatio));
     }
-    else{
+    else if(ui->filepath->text()==""){
         QMessageBox::information(this,(""),"Please select file from your computer");
     }
 }
@@ -113,13 +118,16 @@ void MainWindow::on_btn_browse_clicked()
 void MainWindow::on_btn_browse_2_clicked()
 {
     /* Open file dialog box to choose file */
-    QString filename=QFileDialog::getOpenFileName(this,("Open File"),QDir::homePath(),("Hash Files (*.asc)"));
-    ui->hash1->setText("");
+    QString hashPath = ui->hash1->text();
+    if(hashPath==""){
+        hashPath = QDir::homePath();
+    }
+    QString filename=QFileDialog::getOpenFileName(this,("Open File"),hashPath,("Hash Files (*.asc)"));
 
     /* Set hash file path in text field */
     if(filename != "")
         ui->hash1->setText(filename);
-    else
+    else if(ui->hash1->text()=="")
         QMessageBox::information(this,(""),"Please select file from your computer");
 }
 
@@ -127,13 +135,17 @@ void MainWindow::on_btn_browse_2_clicked()
 void MainWindow::on_btn_browse_3_clicked()
 {
     /* Open file dialog box to choose file */
-    QString filename=QFileDialog::getOpenFileName(this,("Open File"),"",("Hash Files (*.asc)"));
-    ui->hash2->setText("");
+    QString hashPath = ui->hash1->text();
+    if(hashPath==""){
+        hashPath = QDir::homePath();
+    }
+    QString filename=QFileDialog::getOpenFileName(this,("Open File"),hashPath,("Hash Files (*.asc)"));
+
     /* Set hash file path in text field */
     if(filename != "")
         ui->hash2->setText(filename);
-    else
-        QMessageBox::information(this,("Error Message"),"Please select file from your computer");
+    else if(ui->hash2->text()=="")
+        QMessageBox::information(this,(""),"Please select file from your computer");
 }
 
 /* Slot to reset user input form of hash comparison */
