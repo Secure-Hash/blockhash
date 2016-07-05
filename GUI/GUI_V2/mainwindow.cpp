@@ -207,7 +207,7 @@ void MainWindow::on_btn_comparehash_clicked()
         stringstream str_result (stringstream::in | stringstream::out);
         str_result<<result;
         QString msg = QString::fromStdString(str_result.str());
-        QMessageBox::information(this,("Comparison "),"Similarity: "+msg+"%\n Threshold set to 70%");
+        QMessageBox::information(this,("Comparison "),"Similarity: "+msg+"%\nThreshold set to 80%");
 
     }
 }
