@@ -32,8 +32,6 @@ void MainWindow::on_btn_generatehash_clicked()
     /* Validate parameters before proceeding to hash generation */
     if(ui->filepath->text()=="")
         QMessageBox::warning(this,("Error Message"),"Kindly browse Image");
-    else if(ui->hashsize->currentIndex()==0)
-        QMessageBox::warning(this,("Error Message"),"Kindly select hash size");
     else if(ui->savefilename->text()=="")
         QMessageBox::warning(this,("Error Message"),"Select destination to save hash");
     else
