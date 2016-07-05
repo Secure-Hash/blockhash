@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <sstream>
 #include <unistd.h>
+#include <blockhash.h>
 
 /* Setup GUI */
 MainWindow::MainWindow(QWidget *parent) :
@@ -38,35 +39,37 @@ void MainWindow::on_btn_generatehash_clicked()
     else
     {
         /* Set image path and hashsize */
+        Blockhash *bh = new Blockhash();
         int hashsize = (int)sqrt(atof(ui->hashsize->currentText().toStdString().c_str()));
-        bh.init_compute_hash(ui->filepath->text().toStdString(),hashsize);
+        bh->init_compute_hash(ui->filepath->text().toStdString(),hashsize);
 
         /* Create thread and connect all signals to respective slots */
-        QThread thread;
-        connect(&thread, SIGNAL(started()), &bh, SLOT(compute_hash()));
-        connect(&bh, SIGNAL(finished()), &thread, SLOT(quit()));
-        connect(&bh, SIGNAL(finished()), &dialog, SLOT(reset()));
-        connect(&bh, SIGNAL(progressRangeChanged(int,int)), &dialog, SLOT(setRange(int,int)));
-        connect(&bh, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
+        QThread *thread = new QThread();
+        connect(thread, SIGNAL(started()), bh, SLOT(compute_hash()));
+        connect(bh, SIGNAL(finished()), thread, SLOT(quit()));
+        connect(bh, SIGNAL(finished()), &dialog, SLOT(reset()));
+        connect(bh, SIGNAL(progressRangeChanged(int,int)), &dialog, SLOT(setRange(int,int)));
+        connect(bh, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
 
         /* Move blockhash object to new thread */
-        bh.moveToThread(&thread);
+        bh->moveToThread(thread);
 
         /* Start thread */
-        thread.start();
+        thread->start();
 
         /* Show progress dialog box */
         dialog.exec();
 
         /* Wait to finist end work */
-        while(thread.isRunning())
+        while(thread->isRunning())
         {
             sleep(1);
         }
         /* Wait for result and take corrective action */
-        int res = bh.get_result();
+        int res = bh->get_result();
+        string errStr = bh->get_err();
         if(res!=0){
-            QMessageBox::critical(this,("Has generation failed"),QString::fromStdString(bh.get_err()));
+            QMessageBox::critical(this,("Has generation failed"),QString::fromStdString(errStr));
             return;
         }
 
@@ -197,9 +200,12 @@ void MainWindow::on_btn_comparehash_clicked()
             }
 
         /* Compare both the hashesh */
-        float result = bh.compare_hash(hash_file1,hash_file2);
+        Blockhash *bh = new Blockhash();
+        float result = bh->compare_hash(hash_file1,hash_file2);
+        string errStr = bh->get_err();
+        delete bh;
         if(result==-1){
-             QMessageBox::critical(this,("Comparison "),QString::fromStdString(bh.get_err()));
+             QMessageBox::critical(this,("Comparison "),QString::fromStdString(errStr));
              return;
         }
 

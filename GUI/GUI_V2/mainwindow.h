@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <blockhash.h>
 #include <gpg.h>
 #include <QProgressDialog>
 #include <QFutureWatcher>
@@ -50,7 +49,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    Blockhash bh;
     Gpg gpg;
     QProgressDialog dialog;
 };
