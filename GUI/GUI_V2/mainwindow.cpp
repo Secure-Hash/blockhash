@@ -75,6 +75,7 @@ void MainWindow::on_btn_generatehash_clicked()
         bool result = gpg.generate(CHASH_FILE,ui->savefilename->text().toStdString());
         if(result)
         {
+            ui->hash1->setText(ui->savefilename->text());
             QMessageBox::information(this,("Signature generated"),"Image hash generated successfully");
         }
         else{

@@ -156,6 +156,7 @@ int Blockhash::compute_hash(string const &fn, int bits)
         /* Compute hash */
         hash = new int[bits*bits];
 		blockhash_int(bits, pixel_cache, width, height, hash);
+
         /* Convert bit hash to hexadecimal */
         if(bits_to_hexhash(hash,bits*bits)!=0){
             delete hash;
@@ -278,12 +279,19 @@ int Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, int
     int    ii;
     int    block_width;
     int    block_height;
+    int    rblock_height, rblock_width;
     Quantum  *blocks;
     Quantum  value;
 
     /* Height and width of each block */
     block_width = width / bits;
+    rblock_width = width % bits;
     block_height = height / bits;
+    rblock_height = height % bits;
+
+    cout << bits << "X" << bits << ",  ";
+    cout << rblock_height << "X" << rblock_width << ",  ";
+    cout << block_height << "X" << block_width << endl;
 
     /* This will also initialize allocated memory to 0 */
     blocks = new Quantum[bits*bits]();
@@ -291,6 +299,7 @@ int Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, int
     for (y = 0; y < bits; y++) {
         for (x = 0; x < bits; x++) {
             value = 0;
+
             /* Process each block to compute its value*/
             for (iy = 0; iy < block_height; iy++) {
                 for (ix = 0; ix < block_width; ix++) {
