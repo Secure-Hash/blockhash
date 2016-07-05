@@ -272,7 +272,7 @@ background-color: rgb(255, 255, 255);</string>
       </font>
      </property>
      <property name="text">
-      <string>Comparision</string>
+      <string>Comparison</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_5">
