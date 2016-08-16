@@ -155,7 +155,7 @@ int Blockhash::compute_hash(string const &fn, int bits)
 
         /* Compute hash */
         hash = new int[bits*bits];
-		blockhash_int(bits, pixel_cache, width, height, hash);
+		blockhash(bits, pixel_cache, width, height, hash);
 
         /* Convert bit hash to hexadecimal */
         if(bits_to_hexhash(hash,bits*bits)!=0){
@@ -273,7 +273,7 @@ int Blockhash::bits_to_hexhash(int *bits, int nbits)
 /*
  * Divide image into blocks and compute its sum
  */
-int Blockhash::blockhash_int(int bits, Quantum *data, int width, int height, int *hash)
+int Blockhash::blockhash(int bits, Quantum *data, int width, int height, int *hash)
 {
     int    x, y, ix, iy;
     int    ii;

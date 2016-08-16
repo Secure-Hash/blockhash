@@ -33,7 +33,7 @@ class Blockhash : public QObject{
 
         bool set_err(bool error,string err_msg); //Error message setter
         int set_progress(int progress); //Setter for progress
-        int blockhash_int(int bits, Quantum *data, int width, int height, int *hash); //Computing blockhash
+        int blockhash(int bits, Quantum *data, int width, int height, int *hash); //Computing blockhash
         float median(Quantum *data, int n); // Compute median
         int translate_blocks_to_bits(Quantum *blocks, int nblocks, int pixels_per_block,int *hash); // Each block to bit
         int bits_to_hexhash(int *bits, int nbits); // Bits to hexadecimal
